@@ -16,76 +16,99 @@ if ! exists("s:colored")
     let s:colorGroups = []
 endif
 
-map <Leader><F2> :call ColorHighlightToggle()<Return>
 function! ColorHighlightToggle()
     if s:colored == 0 && len(s:colorGroups) == 0
         if &verbose >= 1 | echo "Highlighting colors..." | endif
-        let colorGroup = 4
-        let lineNumber = 0
-        if has('gui_running')
-            let canDoHex = 1
-        else
-            if &verbose > 0 | echo "Highlighting hex values only works with a graphical version of vim. Skipping." | endif
-            let canDoHex = 0
-        endif
-        while lineNumber <= line("$")
-            let currentLine = getline(lineNumber)
-            let lineNumber += 1
-            " Highlight 'hi(light)' lines in Vim mode files in their own
-            " highlighting
-            if &filetype == "vim"
-                let m = matchstr(currentLine, '^\s*hi\(light\)\?\s\+\S\+\s\+')
-                if m != ""
-                    let colDef = substitute(currentLine, m, '', '')
-                    let colDef = substitute(colDef, '^\s*\|\s*$', '', 'g') " trim
-                    let colorDefinition = split(colDef)
-                    " skip 'hi clear' lines
-                    if colorDefinition[0] == "clear" | continue | endif
-                    " remove 'default' keyword when applying the definition
-                    if colorDefinition[0] == "default" | unlet colorDefinition[0] | endif
-                    exe 'hi ColorHighlightGroup'.colorGroup.' '.escape(join(colorDefinition), '\\^$.*~[]')
-                    exe 'let m = matchadd("ColorHighlightGroup'.colorGroup.'", "^".escape("'.escape(currentLine, '"').'", "\\^$.*~[]")."$", 25)'
-                    let s:colorGroups += ['ColorHighlightGroup'.colorGroup]
-                    let colorGroup += 1
-                    continue " do not color hex codes in this line
-                endif
-            endif
-            if canDoHex
-                " highlight hex codes
-                let hexLineMatch = 1
-                while 1
-                    let hexMatch = matchstr(currentLine, '#\(\x\x\x\)\{1,2}', 0, hexLineMatch)
-                    if hexMatch == "" | break | endif
-                    if len(hexMatch) == 3
-                        let hexDef = hexMatch[0].hexMatch[0].hexMatch[1].hexMatch[1].hexMatch[2].hexMatch[2]
-                    else
-                        let hexDef = hexMatch
-                    endif
-                    exe 'hi ColorHighlightGroup'.colorGroup.' guifg='.hexDef.' guibg='.hexDef
-                    exe 'let m = matchadd("ColorHighlightGroup'.colorGroup.'", "'.hexMatch.'", 25)'
-                    let s:colorGroups += ['ColorHighlightGroup'.colorGroup]
-                    let colorGroup += 1
-                    let hexLineMatch += 1
-                endwhile
-              endif
-        endwhile
-
-        augroup ColorHighlight
-          au!
-          " TODO: should not reparse everything, but only updated lines or
-          " something similar
-          autocmd InsertLeave <buffer> call ColorHighlightToggle() | call ColorHighlightToggle()
-        augroup END
-
-        unlet lineNumber colorGroup
-        let s:colored = 1
+        return ColorHighlightOn()
     else
-        call ColorHighlightClear()
+        if &verbose >= 1 | echo "Clearing highlights..." | endif
+        return ColorHighlightClear()
     endif
 endfunction
 
+function! ColorHighlightOn()
+    let s:colorGroup = 4
+    let lineNumber = 0
+    let hexMatchCount = 0
+    let hiMatchCount = 0
+    if has('gui_running')
+        let canDoHex = 1
+    else
+        if &verbose > 0 | echo "Highlighting hex values only works with a graphical version of vim. Skipping." | endif
+        let canDoHex = 0
+    endif
+    while lineNumber <= line("$")
+        let currentLine = getline(lineNumber)
+        let lineNumber += 1
+        " Highlight 'hi(light)' lines in Vim mode files in their own
+        " highlighting
+        if &filetype == "vim"
+            let m = matchstr(currentLine, '^\s*hi\(light\)\?\s\+\(clear\)\@!\(\S\+\)\s\+')
+            if m != ""
+                let colDef = substitute(currentLine, m, '', '')
+                let colDef = substitute(colDef, '^\s*\|\s*$', '', 'g') " trim
+                let colorDefinition = split(colDef)
+
+                " remove 'default' keyword when applying the definition
+                if colorDefinition[0] =~ "^def\(ault\)?" | unlet colorDefinition[0] | endif
+
+                let colorValues = copy(colorDefinition)
+                call filter(colorValues, 'v:val =~ ''=''')
+                if empty(colorValues)
+                    " There are no color value pairs, but it might be a link
+                    " to another group.
+                    if ! empty(colorDefinition) && colorDefinition[0] == 'link'
+                        let highlight = 'link %s '.colorDefinition[-1]
+                    else
+                        continue
+                    endif
+                else
+                    let highlight = '%s '.join(colorDefinition)
+                endif
+                call s:AddHighlight(highlight, '^'.escape(currentLine, '\^$.*~[]').'$')
+                let hiMatchCount += 1
+                continue " do not color hex codes in this line
+            endif
+        endif
+        if canDoHex
+            " highlight hex codes
+            let hexCountInLine = 0
+            while 1
+                let hexMatch = matchstr(currentLine, '#\(\x\x\x\)\{1,2}', 0, hexCountInLine)
+                if hexMatch == "" | break | endif
+                if len(hexMatch) == 3
+                    let hexDef = hexMatch[0].hexMatch[0].hexMatch[1].hexMatch[1].hexMatch[2].hexMatch[2]
+                else
+                    let hexDef = hexMatch
+                endif
+                call s:AddHighlight('%s guifg='.hexDef.' guibg='.hexDef, hexMatch)
+                let hexCountInLine += 1
+            endwhile
+            let hexMatchCount += hexCountInLine
+        endif
+    endwhile
+    if &verbose >= 1 | echo "Marked" hiMatchCount "highlight lines and" hexMatchCount "hex codes." | endif
+
+    augroup ColorHighlight
+      au!
+      " TODO: should not reparse everything, but only updated lines or
+      " something similar
+      autocmd InsertLeave <buffer> call ColorHighlightToggle() | call ColorHighlightToggle()
+    augroup END
+
+    unlet lineNumber
+    let s:colored = 1
+endfunction
+
+function! s:AddHighlight(highlight, match)
+    let colorGroupName = 'ColorHighlightGroup'.s:colorGroup
+    exe 'hi '.printf(a:highlight, colorGroupName)
+    exe 'let m = matchadd("'.colorGroupName.'", "'.a:match.'", 25)'
+    let s:colorGroups += [colorGroupName]
+    let s:colorGroup += 1
+endfunction
+
 function! ColorHighlightClear()
-    if &verbose >= 1 | echo "Unhighlighting colors..." | endif
     let i = len(s:colorGroups)
     while i > 0
         let i -= 1
@@ -98,3 +121,9 @@ function! ColorHighlightClear()
       au!
     augroup END
 endfunction
+
+command! ColorHighlightToggle call ColorHighlightToggle()
+command! ColorHighlightOn call ColorHighlightOn()
+command! ColorHighlightClear call ColorHighlightClear()
+
+map <Leader><F2> :call ColorHighlightToggle()<Return>
