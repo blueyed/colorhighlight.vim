@@ -76,8 +76,8 @@ function! ColorHighlightOn()
             while 1
                 let hexMatch = matchstr(currentLine, '#\(\x\x\x\)\{1,2}', 0, hexCountInLine)
                 if hexMatch == "" | break | endif
-                if len(hexMatch) == 3
-                    let hexDef = hexMatch[0].hexMatch[0].hexMatch[1].hexMatch[1].hexMatch[2].hexMatch[2]
+                if len(hexMatch) == 4
+                    let hexDef = hexMatch[0].hexMatch[1].hexMatch[1].hexMatch[2].hexMatch[2].hexMatch[3].hexMatch[3]
                 else
                     let hexDef = hexMatch
                 endif
