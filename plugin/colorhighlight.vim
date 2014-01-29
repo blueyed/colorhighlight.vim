@@ -41,7 +41,7 @@ function! ColorHighlightOn()
         let currentLine = getline(lineNumber)
         let lineNumber += 1
         " Highlight 'hi(light)' lines in Vim mode files in their own
-        " highlighting
+        " color definition
         if &filetype == "vim"
             let m = matchstr(currentLine, '^\s*hi\(light\)\?\s\+\(clear\)\@!\(\S\+\)\s\+')
             if m != ""
