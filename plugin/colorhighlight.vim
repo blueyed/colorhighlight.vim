@@ -43,10 +43,26 @@ function! ColorHighlightOn()
         " Highlight 'hi(light)' lines in Vim mode files in their own
         " color definition
         if &filetype == "vim"
+            " TODO: merge into colorizer
+            let colDef = ''
             let m = matchstr(currentLine, '^\s*hi\(light\)\?\s\+\(clear\)\@!\(\S\+\)\s\+')
             if m != ""
                 let colDef = substitute(currentLine, m, '', '')
                 let colDef = substitute(colDef, '^\s*\|\s*$', '', 'g') " trim
+            else
+                " no 'hilight match', look for output of ':highlight'
+                let m2 = matchlist(currentLine, '^\S\+ \+xxx \(.*\)$')
+                if len(m2)
+                    " check for 'links to Foo'
+                    if m2[1] =~# '^links to '
+                        let highlight = 'link %s '.m2[1][9:]
+                        call s:AddHighlight(highlight, '^'.escape(currentLine, '\^$.*~[]').'$')
+                        continue
+                    endif
+                    let colDef = m2[1]
+                endif
+            endif
+            if colDef != ''
                 let colorDefinition = split(colDef)
 
                 " remove 'default' keyword when applying the definition
