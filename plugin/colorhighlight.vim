@@ -50,7 +50,7 @@ function! ColorSyntaxHighlightOn()
                 let colDef = substitute(currentLine, m, '', '')
                 let colDef = substitute(colDef, '^\s*\|\s*$', '', 'g') " trim
             else
-                " no 'highlight match', look for output of ':highlight'
+                " No 'highlight match', check for / handle output from ':highlight'.
                 let m2 = matchlist(currentLine, '^\S\+ \+xxx \(.*\)$')
                 if len(m2)
                     " check for 'links to Foo'
