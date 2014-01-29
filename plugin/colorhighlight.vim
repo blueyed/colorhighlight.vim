@@ -67,6 +67,8 @@ function! ColorHighlightOn()
 
                 " remove 'default' keyword when applying the definition
                 if colorDefinition[0] =~ "^def\(ault\)?" | unlet colorDefinition[0] | endif
+                " remove 'xxx' (in output from :highlight)
+                if colorDefinition[0] == "xxx" | unlet colorDefinition[0] | endif
 
                 let colorValues = copy(colorDefinition)
                 call filter(colorValues, 'v:val =~ ''=''')
