@@ -16,17 +16,17 @@ if ! exists("s:colored")
     let s:colorGroups = []
 endif
 
-function! ColorHighlightToggle()
+function! ColorSyntaxHighlightToggle()
     if s:colored == 0 && len(s:colorGroups) == 0
         if &verbose >= 1 | echo "Highlighting colors..." | endif
-        return ColorHighlightOn()
+        return ColorSyntaxHighlightOn()
     else
         if &verbose >= 1 | echo "Clearing highlights..." | endif
-        return ColorHighlightClear()
+        return ColorSyntaxHighlightClear()
     endif
 endfunction
 
-function! ColorHighlightOn()
+function! ColorSyntaxHighlightOn()
     let s:colorGroup = 4
     let lineNumber = 0
     let hexMatchCount = 0
@@ -107,11 +107,11 @@ function! ColorHighlightOn()
     endwhile
     if &verbose >= 1 | echo "Marked" hiMatchCount "highlight lines and" hexMatchCount "hex codes." | endif
 
-    augroup ColorHighlight
+    augroup ColorSyntaxHighlight
       au!
       " TODO: should not reparse everything, but only updated lines or
       " something similar
-      autocmd InsertLeave <buffer> call ColorHighlightToggle() | call ColorHighlightToggle()
+      autocmd InsertLeave <buffer> call ColorSyntaxHighlightToggle() | call ColorSyntaxHighlightToggle()
     augroup END
 
     unlet lineNumber
@@ -119,14 +119,14 @@ function! ColorHighlightOn()
 endfunction
 
 function! s:AddHighlight(highlight, match)
-    let colorGroupName = 'ColorHighlightGroup'.s:colorGroup
+    let colorGroupName = 'ColorSyntaxHighlightGroup'.s:colorGroup
     exe 'hi '.printf(a:highlight, colorGroupName)
     exe 'let m = matchadd("'.colorGroupName.'", "'.a:match.'", 25)'
     let s:colorGroups += [colorGroupName]
     let s:colorGroup += 1
 endfunction
 
-function! ColorHighlightClear()
+function! ColorSyntaxHighlightClear()
     let i = len(s:colorGroups)
     while i > 0
         let i -= 1
@@ -135,13 +135,13 @@ function! ColorHighlightClear()
     endwhile
     call clearmatches()
     let s:colored = 0
-    augroup ColorHighlight
+    augroup ColorSyntaxHighlight
       au!
     augroup END
 endfunction
 
-command! ColorHighlightToggle call ColorHighlightToggle()
-command! ColorHighlightOn call ColorHighlightOn()
-command! ColorHighlightClear call ColorHighlightClear()
+command! ColorSyntaxHighlightToggle call ColorSyntaxHighlightToggle()
+command! ColorSyntaxHighlightOn call ColorSyntaxHighlightOn()
+command! ColorSyntaxHighlightClear call ColorSyntaxHighlightClear()
 
-map <Leader><F2> :call ColorHighlightToggle()<Return>
+map <Leader><F2> :call ColorSyntaxHighlightToggle()<Return>
