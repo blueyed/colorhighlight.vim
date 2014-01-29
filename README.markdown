@@ -6,3 +6,7 @@ It is useful for editing colorschemes, and generally any config file dealing wit
 When looking for a Vim color highlighting plugin, I recommend https://github.com/chrisbra/Colorizer instead.
 
 This plugin has the unique feature to handle `highlight` definitions in a Vim syntax file though, but that might get merged some day.
+
+Here is a screenshot:
+
+![Screenshot](screenshot.png)
