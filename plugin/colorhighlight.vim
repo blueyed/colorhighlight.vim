@@ -28,7 +28,7 @@ endfunction
 
 function! ColorSyntaxHighlightOn()
     let s:colorGroup = 4
-    let lineNumber = 0
+    let lineNumber = 1
     let hexMatchCount = 0
     let hiMatchCount = 0
     if has('gui_running')
