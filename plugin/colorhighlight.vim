@@ -51,15 +51,22 @@ function! ColorSyntaxHighlightOn()
                 let colDef = substitute(colDef, '^\s*\|\s*$', '', 'g') " trim
             else
                 " No 'highlight match', check for / handle output from ':highlight'.
-                let m2 = matchlist(currentLine, '^\S\+ \+xxx \(.*\)$')
-                if len(m2)
+                let ml = matchlist(currentLine, '^\S\+ \+xxx \(.*\)$')
+                if len(ml)
                     " check for 'links to Foo'
-                    if m2[1] =~# '^links to '
-                        let highlight = 'link %s '.m2[1][9:]
+                    if ml[1] =~# '^links to '
+                        let highlight = 'link %s '.ml[1][9:]
                         call s:AddHighlight(highlight, '^'.escape(currentLine, '\^$.*~[]').'$')
                         continue
                     endif
-                    let colDef = m2[1]
+                    let colDef = ml[1]
+                else
+                    " Handle HiLink and HtmlHiLink, used in runtime files, the
+                    " same as `:hi link Foo Bar`, e.g. 'HtmlHiLink htmlLink Underlined'.
+                    let ml = matchlist(currentLine, '^\s*\<\%(Html\)\?HiLink\s\+\(\w\+\)\s\+\(\w\+\)\s*$')
+                    if len(ml)
+                        call s:AddHighlight('link %s '.ml[2], '^'.escape(currentLine, '\^$.*~[]').'$')
+                    endif
                 endif
             endif
             if colDef != ''
