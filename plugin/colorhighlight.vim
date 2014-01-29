@@ -81,7 +81,7 @@ function! ColorSyntaxHighlightOn()
                         continue
                     endif
                 else
-                    let highlight = '%s '.join(colorDefinition)
+                    let highlight = '%s '.join(colorValues)
                 endif
                 call s:AddHighlight(highlight, '^'.escape(currentLine, '\^$.*~[]').'$')
                 let hiMatchCount += 1
