@@ -1,3 +1,9 @@
+# OBSOLETE
+
+This plugin is obsolete, please refer to https://github.com/chrisbra/Colorizer.
+
+# OLD README:
+
 This is a (quite old) fork, based on [hexHighlight.vim](http://www.vim.org/scripts/script.php?script_id=2937).
 
 This plugin looks for hex codes of the format #ffffff or #fff and toggles a highlight in that color.
